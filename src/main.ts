@@ -9,6 +9,9 @@ dotenv.config();
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Set global API prefix
+  app.setGlobalPrefix('api');
+
   // CORS — در dev میتونی localhost رو بذاری، در prod از ENV استفاده کن
   const frontendOrigin = process.env.FRONTEND_URL || 'http://localhost:3001';
   app.enableCors({
@@ -23,7 +26,6 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
-      // اگر می‌خوای سخت‌گیر نباشی، این رو false بذار
       forbidNonWhitelisted: true,
       transform: true,
     }),
