@@ -29,8 +29,11 @@ export class UploadController {
     const ext = safeExt(file.originalname);
     if (!ext) throw new BadRequestException('Only jpg/jpeg/png/webp allowed');
 
-    const filename = `${Date.now()}-${Math.random().toString(16).slice(2)}${ext}`;
-    const url = await this.uploadService.uploadToFtp(file.buffer, filename);
+    const filename = `${Date.now()}-${Math.random()
+      .toString(16)
+      .slice(2)}${ext}`;
+
+    const url = await this.uploadService.saveToLocal(file.buffer, filename);
 
     return { url };
   }
