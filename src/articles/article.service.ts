@@ -1,8 +1,17 @@
-// src/articles/article.service.ts
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Article } from './article.entity';
+import { CreateArticleDto } from './dto/create-article.dto';
+
+function slugify(text: string) {
+  return (text || '')
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\u0600-\u06FF\w-]/g, '')
+    .toLowerCase()
+    .normalize('NFC');
+}
 
 @Injectable()
 export class ArticleService {
@@ -12,7 +21,9 @@ export class ArticleService {
   ) {}
 
   findAll(): Promise<Article[]> {
-    return this.articleRepo.find({ order: { createdAt: 'DESC' } });
+    return this.articleRepo.find({
+      order: { createdAt: 'DESC' },
+    });
   }
 
   async findOneOrThrow(id: number): Promise<Article> {
@@ -21,8 +32,34 @@ export class ArticleService {
     return article;
   }
 
-  create(data: Partial<Article>): Promise<Article> {
-    const article = this.articleRepo.create(data);
+  async findBySlugOrThrow(slug: string): Promise<Article> {
+    const normalized = decodeURIComponent(slug).normalize('NFC');
+    const article = await this.articleRepo.findOne({
+      where: { slug: normalized },
+    });
+    if (!article) throw new NotFoundException('Article not found');
+    return article;
+  }
+
+  async create(dto: CreateArticleDto): Promise<Article> {
+    const title = dto.title.trim();
+
+    const base = slugify(title) || `article-${Date.now()}`;
+    let slug = base;
+    let i = 1;
+
+    while (await this.articleRepo.exist({ where: { slug } })) {
+      slug = `${base}-${i++}`.normalize('NFC');
+    }
+
+    const article = this.articleRepo.create({
+  title,
+  slug: slug.normalize('NFC'),
+  content: dto.content,
+  imageUrl: dto.imageUrl?.trim() || null,
+  author: 'Admin', // ✅ ثابت
+});
+
     return this.articleRepo.save(article);
   }
 

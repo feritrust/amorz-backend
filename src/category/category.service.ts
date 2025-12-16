@@ -19,18 +19,25 @@ export class CategoryService {
   ) {}
 
   async create(dto: { name: string; sortOrder?: number; imageUrl?: string }) {
-    let slug = slugify(dto.name);
-    if (!slug) slug = `cat-${Date.now()}`;       // اگر خالی شد fallback
+  let base = slugify(dto.name).normalize("NFC");   // ✅ اینجا
+  if (!base) base = `cat-${Date.now()}`;
 
-    const category = this.repo.create({
-      name: dto.name,
-      slug,
-      sortOrder: dto.sortOrder || 0,
-      imageUrl: dto.imageUrl || null,
-    });
+  let slug = base;
+  let i = 1;
 
-    return this.repo.save(category);
+  while (await this.repo.exist({ where: { slug } })) {
+    slug = `${base}-${i++}`.normalize("NFC");      // ✅ اینجا هم
   }
+
+  const category = this.repo.create({
+    name: dto.name,
+    slug: slug.normalize("NFC"),                   // ✅ اینجا هم برای اطمینان
+    sortOrder: dto.sortOrder ?? 0,
+    imageUrl: dto.imageUrl ?? null,
+  });
+
+  return this.repo.save(category);
+}
 async remove(id: number) {
     const category = await this.findOne(id);
     if (!category) throw new NotFoundException('Category not found');

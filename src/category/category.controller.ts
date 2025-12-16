@@ -24,18 +24,19 @@ export class CategoryController {
     return this.categoryService.findRandom(take);
   }
 
-  @Get(':id')
-async findOne(@Param('id') id: string) {
-  let cat: Category | null = null;   // ✅ اینجا نوع رو مشخص می‌کنیم
+@Get('slug/:slug')
+async findBySlug(@Param('slug') slug: string) {
+  const normalized = decodeURIComponent(slug).normalize("NFC");
+  const cat = await this.categoryService.findBySlug(normalized);
+  if (!cat) throw new NotFoundException('Category not found');
+  return cat;
+}
 
-  // اگر عدد بود → جست‌وجو با id
-  if (/^\d+$/.test(id)) {
-    cat = await this.categoryService.findOne(Number(id));
-  } else {
-    // وگرنه → جست‌وجو با slug
-    cat = await this.categoryService.findBySlug(id);
-  }
 
+// GET by id (فقط عدد)
+@Get(':id')
+async findOne(@Param('id', ParseIntPipe) id: number) {
+  const cat = await this.categoryService.findOne(id);
   if (!cat) throw new NotFoundException('Category not found');
   return cat;
 }

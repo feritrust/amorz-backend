@@ -20,6 +20,7 @@ dotenv.config();
       database: process.env.DB_NAME,
       autoLoadEntities: true,
       synchronize: true,
+      
     }),
     ArticleModule,
     CategoryModule,
@@ -27,5 +28,7 @@ dotenv.config();
     AdminModule,
     UploadModule,
   ],
+  
+  
 })
 export class AppModule {}

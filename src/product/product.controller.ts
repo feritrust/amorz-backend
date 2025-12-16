@@ -53,13 +53,16 @@ findAll(
 
   
 
-  @Get(':id')
-  async findOne(@Param('id') id: string) {
-    if (/^\d+$/.test(id)) {
-      return this.productService.findOneById(Number(id));
-    }
-    return this.productService.findOneBySlug(id);
-  }
+  @Get('slug/:slug')
+async findBySlug(@Param('slug') slug: string) {
+  const normalized = decodeURIComponent(slug).normalize('NFC');
+  return this.productService.findOneBySlug(normalized);
+}
+
+@Get(':id')
+async findOne(@Param('id', ParseIntPipe) id: number) {
+  return this.productService.findOneById(id);
+}
 
   @UseGuards(AdminGuard)
   @Delete(':id')
