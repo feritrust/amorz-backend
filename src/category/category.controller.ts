@@ -26,8 +26,8 @@ export class CategoryController {
 
 @Get('slug/:slug')
 async findBySlug(@Param('slug') slug: string) {
-  const normalized = decodeURIComponent(slug).normalize("NFC");
-  const cat = await this.categoryService.findBySlug(normalized);
+  const s = String(slug || '').trim().toLowerCase();
+  const cat = await this.categoryService.findBySlug(s);
   if (!cat) throw new NotFoundException('Category not found');
   return cat;
 }

@@ -1,14 +1,15 @@
-import { Injectable , NotFoundException } from '@nestjs/common';
+import { BadRequestException,Injectable , NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Category } from './category.entity';
 
-function slugify(text: string) {
-  return text
+function cleanSlug(s: string) {
+  return String(s || '')
     .trim()
-    .replace(/\s+/g, '-')                        // فاصله → -
-    .replace(/[^\u0600-\u06FF\w-]/g, '')         // حروف فارسی و لاتین بمونن
-    .toLowerCase();
+    .toLowerCase()
+    .replace(/\s+/g, '-')     // space -> -
+    .replace(/-+/g, '-')      // --- -> -
+    .replace(/^-|-$/g, '');   // trim -
 }
 
 @Injectable()
@@ -18,26 +19,28 @@ export class CategoryService {
     private repo: Repository<Category>,
   ) {}
 
-  async create(dto: { name: string; sortOrder?: number; imageUrl?: string }) {
-  let base = slugify(dto.name).normalize("NFC");   // ✅ اینجا
-  if (!base) base = `cat-${Date.now()}`;
+  async create(dto: { name: string; slug: string; sortOrder?: number; imageUrl?: string }) {
+    const base = cleanSlug(dto.slug);
 
-  let slug = base;
-  let i = 1;
+    if (!base) throw new BadRequestException('slug is required');
 
-  while (await this.repo.exist({ where: { slug } })) {
-    slug = `${base}-${i++}`.normalize("NFC");      // ✅ اینجا هم
+    // ✅ اینجا هم دوباره enforce کن (به فرانت اعتماد نکن)
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(base)) {
+      throw new BadRequestException('slug format is invalid');
+    }
+
+    const exists = await this.repo.exist({ where: { slug: base } });
+    if (exists) throw new BadRequestException('slug already exists');
+
+    const category = this.repo.create({
+      name: dto.name,
+      slug: base,
+      sortOrder: dto.sortOrder ?? 0,
+      imageUrl: dto.imageUrl ?? null,
+    });
+
+    return this.repo.save(category);
   }
-
-  const category = this.repo.create({
-    name: dto.name,
-    slug: slug.normalize("NFC"),                   // ✅ اینجا هم برای اطمینان
-    sortOrder: dto.sortOrder ?? 0,
-    imageUrl: dto.imageUrl ?? null,
-  });
-
-  return this.repo.save(category);
-}
 async remove(id: number) {
     const category = await this.findOne(id);
     if (!category) throw new NotFoundException('Category not found');
