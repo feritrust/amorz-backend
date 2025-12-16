@@ -5,6 +5,7 @@ import { CategoryModule } from './category/category.module';
 import { ProductModule } from './product/product.module';
 import { ArticleModule } from './articles/article.module';
 import { AdminModule } from './admin/admin.module';
+import { UploadModule } from './upload/upload.module';
 
 dotenv.config();
 
@@ -24,6 +25,7 @@ dotenv.config();
     CategoryModule,
     ProductModule,
     AdminModule,
+    UploadModule,
   ],
 })
 export class AppModule {}
