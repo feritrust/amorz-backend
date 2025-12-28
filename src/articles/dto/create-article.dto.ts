@@ -1,4 +1,5 @@
-import { IsOptional, IsString, MinLength } from 'class-validator';
+// src/articles/dto/create-article.dto.ts
+import { IsOptional, IsString, MinLength, MaxLength } from 'class-validator';
 
 export class CreateArticleDto {
   @IsString()
@@ -7,7 +8,17 @@ export class CreateArticleDto {
 
   @IsString()
   @MinLength(10)
-  content!: string; // یا body / html / markdown (اسم فیلدت هر چی هست)
+  content!: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(70)
+  metaTitle?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(170)
+  metaDescription?: string;
 
   @IsOptional()
   @IsString()
